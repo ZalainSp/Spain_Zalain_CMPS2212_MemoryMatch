@@ -140,7 +140,6 @@ export function createGameService(eventBus) {
     return copy;
   }
   
-
   /**
    * Builds the initial deck: two cards per symbol, shuffled, each with a
    * stable numeric id in the range [0, TOTAL_CARDS). Returns a new array.
@@ -207,7 +206,6 @@ export function createGameService(eventBus) {
   // -------------------------------------------------------------------------
   // Public API
   // -------------------------------------------------------------------------
-
   /**
    * Begin a new game. Builds a fresh shuffled deck, resets state,
    * and emits 'game:started'. Also starts the timer.
@@ -291,38 +289,28 @@ export function createGameService(eventBus) {
     //             'game:matchFailed' directly. Do not emit anything
     //             new from inside this timeout.
 
-    //validation
     if (state.status !== 'playing' || state.isLocked) return;
-
     const card = getCardById(cardId);
-
     if (!card || card.isFlipped || card.isMatched) return;
 
     if (state.secondPickId !== null) return;
-
-    //flip and emit
     card.isFlipped = true;
-
     eventBus.emit('game:cardFlipped', {
       cardId,
       symbol: card.symbol
     });
 
-    //first or second pick?
     if (state.firstPickId === null) {
     state.firstPickId = cardId;
     return;
   }
 
-  //second pick logic
   state.secondPickId = cardId;
   state.moves++;
-
   eventBus.emit('game:moveCountChanged', {
     moves: state.moves
   });
 
-  //match check
   const first = getCardById(state.firstPickId);
   const second = getCardById(state.secondPickId);
 
@@ -344,18 +332,13 @@ export function createGameService(eventBus) {
     if (state.matchedCount === TOTAL_CARDS) {
       state.status = 'won';
       stopTimer();
-
       eventBus.emit('game:won', {
         moves: state.moves,
         elapsedSeconds: state.elapsedSeconds
       });
     }
-  }
-
-  //if no match
-    else {
+  } else {
     state.isLocked = true;
-
     eventBus.emit('game:matchFailed', {
       firstId: first.id,
       secondId: second.id
